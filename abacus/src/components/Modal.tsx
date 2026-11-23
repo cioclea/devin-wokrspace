@@ -17,7 +17,21 @@ export default function Modal({ open, labelledBy, className = "", onClose, child
     if (!open) return;
     const previous = document.activeElement as HTMLElement | null;
     dialogRef.current?.querySelector<HTMLElement>(".btn.primary")?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key !== "Tab" || !dialogRef.current) return;
+      const focusable = dialogRef.current.querySelectorAll<HTMLElement>("button, [href], [tabindex]:not([tabindex='-1'])");
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      if (!first) return;
+      const inside = dialogRef.current.contains(document.activeElement);
+      if (e.shiftKey && (!inside || document.activeElement === first)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (!inside || document.activeElement === last)) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("keydown", onKey);
