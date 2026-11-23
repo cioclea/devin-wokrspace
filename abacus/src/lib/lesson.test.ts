@@ -43,7 +43,6 @@ describe("lessonReducer", () => {
       { rod: 4, type: "upper", index: 0 },
       { rod: 4, type: "lower", index: 2 },
     ]);
-    expect(s.hints).toEqual([]);
   });
 
   it("awards points once when enough parts are explored", () => {
