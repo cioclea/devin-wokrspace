@@ -21,18 +21,12 @@ const POSITIONS: { type: BeadType; index: number }[] = [
   { type: "upper", index: 0 },
   ...Array.from({ length: LOWER_BEADS }, (_, i) => ({ type: "lower" as const, index: i + 1 })),
 ];
-const GHOST_CLICK_MS = 150;
 
 export default function Soroban({ board, selectedRod, hints, activePart, onTap, onSelectRod, onDigit }: Props) {
   const beadRefs = useRef(new Map<string, HTMLButtonElement>());
-  const lastTap = useRef({ key: "", t: 0 });
   const hinted = new Set(hints.map(beadKey));
 
   const tap = (rod: number, type: BeadType, index: number) => {
-    const key = beadKey({ rod, type, index });
-    const now = performance.now();
-    if (lastTap.current.key === key && now - lastTap.current.t < GHOST_CLICK_MS) return;
-    lastTap.current = { key, t: now };
     navigator.vibrate?.(8);
     onTap(rod, type, index);
   };
