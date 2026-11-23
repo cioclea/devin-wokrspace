@@ -211,4 +211,7 @@ aside{display:flex;flex-direction:column;gap:16px;position:sticky;top:86px}
   .bwrap{gap:8px}
   .big{width:86px;height:98px;font-size:62px}
 }
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .bead.hint .shape,.soroban.hl-upper .bead.upper .shape,.soroban.hl-lower .bead.lower .shape{filter:brightness(1.35) drop-shadow(0 0 6px #fff)}
+}
