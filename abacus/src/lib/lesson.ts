@@ -93,8 +93,10 @@ const emit = (state: LessonState, event: LessonEvent): LessonState => ({
 export const isLastMission = (s: Pick<LessonState, "missionIndex">) => s.missionIndex === MISSIONS.length - 1;
 
 function updateBoard(state: LessonState, board: Board, selectedRod: number): LessonState {
-  const next: LessonState = { ...state, board, selectedRod, hints: [] };
-  if (state.solved || totalOf(board) !== MISSIONS[state.missionIndex].target) return next;
+  const target = MISSIONS[state.missionIndex].target;
+  const hints = state.hints.length ? hintBeads(board, target) : [];
+  const next: LessonState = { ...state, board, selectedRod, hints };
+  if (state.solved || totalOf(board) !== target) return next;
   const points = MISSION_POINTS + (state.hintUsed ? 0 : NO_HINT_BONUS);
   return emit(
     { ...next, solved: true, points: state.points + points },

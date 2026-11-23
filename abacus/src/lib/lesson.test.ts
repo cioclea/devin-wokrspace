@@ -35,6 +35,17 @@ describe("lessonReducer", () => {
     expect(s.hints).toEqual([]);
   });
 
+  it("keeps the remaining hints after a hinted bead is tapped", () => {
+    let s = initialLesson();
+    for (let i = 0; i < MISSIONS.length - 1; i++) s = run(solve(s), { type: "next" });
+    s = run(s, { type: "hint" }, { type: "tap", rod: 2, bead: "upper", index: 0 });
+    expect(s.hints).toEqual([
+      { rod: 4, type: "upper", index: 0 },
+      { rod: 4, type: "lower", index: 2 },
+    ]);
+    expect(s.hints).toEqual([]);
+  });
+
   it("awards points once when enough parts are explored", () => {
     const s = run(
       initialLesson(),
