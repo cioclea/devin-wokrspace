@@ -78,6 +78,7 @@ export default function Soroban({ board, selectedRod, hints, activePart, onTap, 
         aria-label={`${PLACES[r]}: ${label}, ${active ? "activă" : "inactivă"}`}
         onClick={() => tap(r, type, index)}
         onKeyDown={(e) => onKeyDown(e, r, pos)}
+        onFocus={() => r !== selectedRod && onSelectRod(r)}
       >
         <span className="shape" />
       </button>
