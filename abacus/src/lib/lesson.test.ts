@@ -68,4 +68,18 @@ describe("lessonReducer", () => {
     expect(goalsOf(s).slice(1).every((g) => g.done)).toBe(true);
     expect(run(s, { type: "replay" }).missionIndex).toBe(0);
   });
+
+  it("hydrates a saved state without resurrecting its event", () => {
+    const saved = { ...solve(initialLesson()), points: 42 };
+    const s = run(initialLesson(), { type: "hydrate", state: saved });
+    expect(s).toMatchObject({ missionIndex: 0, solved: true, points: 42 });
+    expect(s.event).toBeNull();
+  });
+
+  it("resetProgress returns to the initial lesson with a wipe event", () => {
+    const s = run(solve(initialLesson()), { type: "next" }, { type: "resetProgress" });
+    expect(s).toMatchObject({ missionIndex: 0, points: 0, solved: false });
+    expect(s.board.every((r) => !r.upper && r.lower === 0)).toBe(true);
+    expect(s.event?.kind).toBe("reset-progress");
+  });
 });

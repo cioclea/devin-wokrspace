@@ -5,6 +5,7 @@ import {
   MISSIONS, PRAISE, goalsOf, initialLesson, isLastMission, lessonReducer, progressOf,
 } from "@/lib/lesson";
 import { formatRo, totalOf } from "@/lib/soroban";
+import { loadLesson, saveLesson } from "@/lib/persist";
 import BottomBar from "./BottomBar";
 import Confetti from "./Confetti";
 import Goals from "./Goals";
@@ -26,7 +27,27 @@ export default function AbacusApp() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
   const [confetti, setConfetti] = useState({ burst: 0, count: 50 });
+  const [wipeArm, setWipeArm] = useState(false);
   const toastSeq = useRef(0);
+  const wipeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSaved = useRef(state);
+
+  // Restore saved progress after mount (keeps SSR/first paint identical), then
+  // persist every subsequent state change. The first effect run is skipped so
+  // the initial state never overwrites stored progress before hydration.
+  useEffect(() => {
+    const saved = loadLesson();
+    if (saved) dispatch({ type: "hydrate", state: saved });
+  }, []);
+  useEffect(() => {
+    if (lastSaved.current === state) return;
+    lastSaved.current = state;
+    saveLesson(state);
+  }, [state]);
+
+  useEffect(() => () => {
+    if (wipeTimer.current) clearTimeout(wipeTimer.current);
+  }, []);
 
   const showToast = useCallback((text: string, good = false) => {
     setToast({ text, good, seq: ++toastSeq.current });
@@ -68,6 +89,9 @@ export default function AbacusApp() {
       case "finished":
         burst(120);
         break;
+      case "reset-progress":
+        showToast("Progresul a fost șters. Succes la reînceput!", true);
+        break;
     }
   }, [event, showToast]);
 
@@ -84,6 +108,18 @@ export default function AbacusApp() {
 
   const closeHelp = useCallback(() => setHelpOpen(false), []);
   const closeFinished = useCallback(() => dispatch({ type: "closeFinished" }), []);
+
+  const wipeProgress = useCallback(() => {
+    if (!wipeArm) {
+      setWipeArm(true);
+      wipeTimer.current = setTimeout(() => setWipeArm(false), 3000);
+      return;
+    }
+    if (wipeTimer.current) clearTimeout(wipeTimer.current);
+    setWipeArm(false);
+    setHelpOpen(false);
+    dispatch({ type: "resetProgress" });
+  }, [wipeArm]);
 
   const mission = MISSIONS[state.missionIndex];
   const last = isLastMission(state);
@@ -166,6 +202,11 @@ export default function AbacusApp() {
             💡 Arată-mi un indiciu
           </button>
           <button type="button" className="btn primary" onClick={closeHelp}>Am înțeles</button>
+        </div>
+        <div className="row">
+          <button type="button" className="btn danger" onClick={wipeProgress}>
+            {wipeArm ? "⚠️ Confirmă: șterge tot progresul" : "🗑️ Șterge tot progresul"}
+          </button>
         </div>
       </Modal>
 
