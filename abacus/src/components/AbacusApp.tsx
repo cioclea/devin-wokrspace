@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import {
-  MISSIONS, PRAISE, goalsOf, initialLesson, isLastMission, lessonReducer, progressOf,
-} from "@/lib/lesson";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { PRAISE, createEngine } from "@/lib/lesson";
+import type { LessonDefinition } from "@/lib/lesson";
+import { lessonStorageKey } from "@/lib/curriculum";
 import { formatRo, totalOf } from "@/lib/soroban";
 import { loadLesson, saveLesson } from "@/lib/persist";
 import BottomBar from "./BottomBar";
@@ -22,8 +22,17 @@ interface Toast {
   seq: number;
 }
 
-export default function AbacusApp() {
-  const [state, dispatch] = useReducer(lessonReducer, undefined, initialLesson);
+interface Props {
+  lesson: LessonDefinition;
+  moduleTitle: string;
+  onOpenMenu?: () => void;
+  navOpen?: boolean;
+}
+
+export default function AbacusApp({ lesson, moduleTitle, onOpenMenu, navOpen }: Props) {
+  const engine = useMemo(() => createEngine(lesson), [lesson]);
+  const storageKey = lessonStorageKey(lesson);
+  const [state, dispatch] = useReducer(engine.reducer, undefined, engine.initialLesson);
   const [helpOpen, setHelpOpen] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
   const [confetti, setConfetti] = useState({ burst: 0, count: 50 });
@@ -36,14 +45,14 @@ export default function AbacusApp() {
   // persist every subsequent state change. The first effect run is skipped so
   // the initial state never overwrites stored progress before hydration.
   useEffect(() => {
-    const saved = loadLesson();
+    const saved = loadLesson(storageKey, lesson);
     if (saved) dispatch({ type: "hydrate", state: saved });
-  }, []);
+  }, [storageKey, lesson]);
   useEffect(() => {
     if (lastSaved.current === state) return;
     lastSaved.current = state;
-    saveLesson(state);
-  }, [state]);
+    saveLesson(storageKey, state);
+  }, [state, storageKey]);
 
   useEffect(() => () => {
     if (wipeTimer.current) clearTimeout(wipeTimer.current);
@@ -75,7 +84,7 @@ export default function AbacusApp() {
         showToast("Sorobanul a fost curățat. Toate tijele arată 0.");
         break;
       case "next":
-        showToast(`Misiunea ${event.mission + 1}: ${MISSIONS[event.mission].text}`);
+        showToast(`Misiunea ${event.mission + 1}: ${engine.missions[event.mission].text}`);
         break;
       case "hint":
         showToast(event.text);
@@ -93,7 +102,7 @@ export default function AbacusApp() {
         showToast("Progresul a fost șters. Succes la reînceput!", true);
         break;
     }
-  }, [event, showToast]);
+  }, [event, showToast, engine]);
 
   const anyModalOpen = helpOpen || state.finished;
   const { selectedRod } = state;
@@ -121,8 +130,8 @@ export default function AbacusApp() {
     dispatch({ type: "resetProgress" });
   }, [wipeArm]);
 
-  const mission = MISSIONS[state.missionIndex];
-  const last = isLastMission(state);
+  const mission = engine.missions[state.missionIndex];
+  const last = engine.isLastMission(state);
   const total = totalOf(state.board);
   const message = last
     ? "Ai terminat toate misiunile! Apasă „Următoarea lecție”."
@@ -130,13 +139,22 @@ export default function AbacusApp() {
 
   return (
     <>
-      <Header step={state.missionIndex + 1} steps={MISSIONS.length} progress={progressOf(state)} points={state.points} />
+      <Header
+        step={state.missionIndex + 1}
+        steps={engine.missions.length}
+        progress={engine.progressOf(state)}
+        points={state.points}
+        moduleTitle={moduleTitle}
+        lessonTitle={lesson.title}
+        navOpen={navOpen}
+        onOpenMenu={onOpenMenu}
+      />
 
       <main>
         <section aria-labelledby="lessonTitle">
-          <span className="eyebrow">Modulul 1 · Lecția 1</span>
-          <h1 id="lessonTitle">Descoperă Sorobanul</h1>
-          <p className="subtitle">Învață să calculezi folosind tehnica japoneză</p>
+          <span className="eyebrow">{moduleTitle} · Lecția {lesson.number}</span>
+          <h1 id="lessonTitle">{lesson.title}</h1>
+          <p className="subtitle">{lesson.subtitle ?? "Învață să calculezi folosind tehnica japoneză"}</p>
 
           <MissionCard mission={mission} index={state.missionIndex} solved={state.solved} message={message} />
 
@@ -161,17 +179,18 @@ export default function AbacusApp() {
         <aside aria-label="Panou de informații">
           <InfoPanel board={state.board} selectedRod={selectedRod} />
           <PartsExplorer
+            parts={engine.parts}
             activePart={state.activePart}
             seenParts={state.seenParts}
             onToggle={(part) => dispatch({ type: "togglePart", part })}
           />
-          <Goals goals={goalsOf(state)} />
+          <Goals goals={engine.goalsOf(state)} />
         </aside>
       </main>
 
       <BottomBar
         missionIndex={state.missionIndex}
-        missions={MISSIONS.length}
+        missions={engine.missions.length}
         solved={state.solved}
         last={last}
         onReset={() => dispatch({ type: "reset" })}

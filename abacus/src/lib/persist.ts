@@ -1,11 +1,9 @@
-import { MISSIONS, PARTS } from "./lesson";
-import type { LessonState, PartId } from "./lesson";
+import type { LessonDefinition } from "./lesson";
+import type { LessonState } from "./lesson";
 import type { Board, BeadRef } from "./soroban";
 import { LOWER_BEADS } from "./soroban";
 
-const STORAGE_KEY = "soroban-lesson-v1";
-
-const isPartId = (v: unknown): v is PartId => PARTS.some((p) => p.id === v);
+const isPartId = (v: unknown, def: LessonDefinition): boolean => def.parts.some((p) => p.id === v);
 
 const isBeadRef = (v: unknown): v is BeadRef => {
   if (typeof v !== "object" || v === null) return false;
@@ -33,14 +31,14 @@ const isBoard = (v: unknown): v is Board =>
   );
 
 /** Structural check for a persisted lesson; rejects anything that could crash the UI. */
-export function isValidLessonState(v: unknown): v is LessonState {
+export function isValidLessonState(v: unknown, def: LessonDefinition): v is LessonState {
   if (typeof v !== "object" || v === null) return false;
   const s = v as Record<string, unknown>;
   return (
     isBoard(s.board) &&
     Number.isInteger(s.missionIndex) &&
     (s.missionIndex as number) >= 0 &&
-    (s.missionIndex as number) < MISSIONS.length &&
+    (s.missionIndex as number) < def.missions.length &&
     typeof s.selectedRod === "number" &&
     Number.isInteger(s.selectedRod) &&
     (s.selectedRod as number) >= 0 &&
@@ -54,33 +52,33 @@ export function isValidLessonState(v: unknown): v is LessonState {
     Array.isArray(s.hints) &&
     (s.hints as unknown[]).every(isBeadRef) &&
     Array.isArray(s.seenParts) &&
-    (s.seenParts as unknown[]).every(isPartId) &&
-    (s.activePart === null || isPartId(s.activePart))
+    (s.seenParts as unknown[]).every((p) => isPartId(p, def)) &&
+    (s.activePart === null || isPartId(s.activePart, def))
   );
 }
 
-export function saveLesson(state: LessonState): void {
+export function saveLesson(key: string, state: LessonState): void {
   try {
     // `event` is transient UI feedback; it must not survive a reload.
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, event: null }));
+    localStorage.setItem(key, JSON.stringify({ ...state, event: null }));
   } catch {
     // Storage may be unavailable (private mode, quota) – persistence is best-effort.
   }
 }
 
-export function loadLesson(): LessonState | null {
+export function loadLesson(key: string, def: LessonDefinition): LessonState | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return null;
     const parsed: unknown = JSON.parse(raw);
-    if (!isValidLessonState(parsed)) {
-      localStorage.removeItem(STORAGE_KEY);
+    if (!isValidLessonState(parsed, def)) {
+      localStorage.removeItem(key);
       return null;
     }
     return { ...parsed, event: null };
   } catch {
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(key);
     } catch {
       // ignore
     }
@@ -88,9 +86,9 @@ export function loadLesson(): LessonState | null {
   }
 }
 
-export function clearLesson(): void {
+export function clearLesson(key: string): void {
   try {
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(key);
   } catch {
     // ignore
   }

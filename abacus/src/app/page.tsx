@@ -1,5 +1,5 @@
-import AbacusApp from "@/components/AbacusApp";
+import Shell from "@/components/Shell";
 
 export default function Home() {
-  return <AbacusApp />;
+  return <Shell />;
 }

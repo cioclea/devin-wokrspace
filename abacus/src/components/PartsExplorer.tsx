@@ -1,18 +1,19 @@
-import { PARTS, PartId } from "@/lib/lesson";
+import type { PartDef, PartId } from "@/lib/lesson";
 
 interface Props {
+  parts: PartDef[];
   activePart: PartId | null;
   seenParts: PartId[];
   onToggle: (part: PartId) => void;
 }
 
-export default function PartsExplorer({ activePart, seenParts, onToggle }: Props) {
-  const active = PARTS.find((p) => p.id === activePart);
+export default function PartsExplorer({ parts, activePart, seenParts, onToggle }: Props) {
+  const active = parts.find((p) => p.id === activePart);
   return (
     <div className="card parts">
       <h3>Părțile Sorobanului</h3>
       <div className="chips">
-        {PARTS.map((p) => (
+        {parts.map((p) => (
           <button
             key={p.id}
             type="button"

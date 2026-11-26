@@ -3,12 +3,27 @@ interface Props {
   steps: number;
   progress: number;
   points: number;
+  moduleTitle: string;
+  lessonTitle: string;
+  navOpen?: boolean;
+  onOpenMenu?: () => void;
 }
 
-export default function Header({ step, steps, progress, points }: Props) {
+export default function Header({ step, steps, progress, points, moduleTitle, lessonTitle, navOpen, onOpenMenu }: Props) {
   return (
     <header>
       <div className="hwrap">
+        {onOpenMenu && (
+          <button
+            type="button"
+            className="menu-btn"
+            aria-label="Meniu module"
+            aria-expanded={navOpen}
+            onClick={onOpenMenu}
+          >
+            ☰
+          </button>
+        )}
         <div className="logo" aria-label="Abacus Soroban">
           <div className="logo-mark" aria-hidden="true">
             <div><i /><i /><i /></div>
@@ -17,7 +32,7 @@ export default function Header({ step, steps, progress, points }: Props) {
         </div>
         <div className="module" aria-label="Progresul lecției">
           <div className="module-top">
-            <span><b>Modulul 1</b> · Descoperă Sorobanul</span>
+            <span><b>{moduleTitle}</b> · {lessonTitle}</span>
             <span>Pasul {step}/{steps}</span>
           </div>
           <div className="bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>

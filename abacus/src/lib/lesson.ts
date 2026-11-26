@@ -8,26 +8,34 @@ export interface Mission {
   icon: string;
 }
 
-export const MISSIONS: Mission[] = [
-  { text: "Atinge o bilă inferioară de pe tija Unităților.", target: 1, icon: "👆" },
-  { text: "Formează cifra 3 pe tija Unităților.", target: 3, icon: "🔢" },
-  { text: "Formează cifra 5 folosind o singură bilă.", target: 5, icon: "✋" },
-  { text: "Formează cifra 7.", target: 7, icon: "🌟" },
-  { text: "Formează cifra 9 – cea mai mare cifră de pe o tijă.", target: 9, icon: "🚀" },
-  { text: "Formează numărul 24 (2 zeci și 4 unități).", target: 24, icon: "🧩" },
-  { text: "Formează numărul 507.", target: 507, icon: "🏆" },
-];
+export interface PartDef {
+  id: string;
+  name: string;
+  desc: string;
+}
 
-export type PartId = "frame" | "beam" | "rod" | "upper" | "lower" | "dot";
+export type PartId = string;
 
-export const PARTS: { id: PartId; name: string; desc: string }[] = [
-  { id: "frame", name: "Rama", desc: "Rama (waku) ține totul împreună. Sorobanul se ține orizontal, pe masă." },
-  { id: "beam", name: "Bara de calcul", desc: "Bara centrală (hari) desparte bilele. Doar bilele care ating bara se numără." },
-  { id: "rod", name: "Tijele", desc: "Fiecare tijă (keta) este o poziție zecimală: Unități, Zeci, Sute, Mii…" },
-  { id: "upper", name: "Bila superioară = 5", desc: "Bila de sus („bila cerului”) valorează 5 când coboară la bară." },
-  { id: "lower", name: "Bile inferioare = 1", desc: "Cele 4 bile de jos („bilele pământului”) valorează câte 1 când urcă la bară." },
-  { id: "dot", name: "Punctele", desc: "Punctele de pe bară marchează tija Unităților și te ajută să citești numerele mari." },
-];
+export interface GoalDef {
+  text: string;
+  /** Mission index that must be passed (or solved) for the goal to complete. */
+  afterMission?: number;
+  /** Completes when the learner has explored PARTS_TO_SEE different parts. */
+  needsParts?: boolean;
+}
+
+/** Everything needed to run one lesson; cloning a lesson = copying this object. */
+export interface LessonDefinition {
+  id: string;
+  moduleId: string;
+  number: number;
+  title: string;
+  subtitle?: string;
+  missions: Mission[];
+  parts: PartDef[];
+  goals: GoalDef[];
+  comingSoon?: boolean;
+}
 
 export const PRAISE = ["Excelent!", "Bravo!", "Super!", "Minunat!", "Perfect!", "Ești un campion!"];
 export const MISSION_POINTS = 10;
@@ -74,99 +82,117 @@ export type LessonAction =
   | { type: "hydrate"; state: LessonState }
   | { type: "resetProgress" };
 
-export const initialLesson = (): LessonState => ({
-  board: emptyBoard(ROD_COUNT),
-  selectedRod: UNITS_ROD,
-  missionIndex: 0,
-  solved: false,
-  hintUsed: false,
-  points: 0,
-  hints: [],
-  seenParts: [],
-  activePart: null,
-  finished: false,
-  event: null,
-});
-
 const emit = (state: LessonState, event: LessonEvent): LessonState => ({
   ...state,
   event: { ...event, seq: (state.event?.seq ?? 0) + 1 },
 });
 
-export const isLastMission = (s: Pick<LessonState, "missionIndex">) => s.missionIndex === MISSIONS.length - 1;
-
-function updateBoard(state: LessonState, board: Board, selectedRod: number): LessonState {
-  const target = MISSIONS[state.missionIndex].target;
-  const hints = state.hints.length ? hintBeads(board, target) : [];
-  const next: LessonState = { ...state, board, selectedRod, hints };
-  if (state.solved || totalOf(board) !== target) return next;
-  const points = MISSION_POINTS + (state.hintUsed ? 0 : NO_HINT_BONUS);
-  return emit(
-    { ...next, solved: true, points: state.points + points },
-    { kind: "solved", points, bonus: !state.hintUsed, praise: PRAISE[state.missionIndex % PRAISE.length] },
-  );
+export interface LessonEngine {
+  def: LessonDefinition;
+  missions: Mission[];
+  parts: PartDef[];
+  initialLesson(): LessonState;
+  reducer(state: LessonState, action: LessonAction): LessonState;
+  goalsOf(state: LessonState): { text: string; done: boolean }[];
+  progressOf(state: LessonState): number;
+  isLastMission(state: LessonState): boolean;
 }
 
-export function lessonReducer(state: LessonState, action: LessonAction): LessonState {
-  switch (action.type) {
-    case "tap":
-      return updateBoard(state, tapBead(state.board, action.rod, action.bead, action.index), action.rod);
-    case "setDigit":
-      return updateBoard(state, setDigit(state.board, action.rod, action.digit), action.rod);
-    case "selectRod":
-      return { ...state, selectedRod: action.rod };
-    case "reset":
-      return emit({ ...state, board: emptyBoard(state.board.length), hints: [] }, { kind: "reset" });
-    case "next": {
-      if (!state.solved) return emit(state, { kind: "blocked" });
-      if (isLastMission(state)) return emit({ ...state, finished: true }, { kind: "finished" });
-      const missionIndex = state.missionIndex + 1;
-      return emit(
-        {
-          ...state, missionIndex, solved: false, hintUsed: false, hints: [],
-          board: emptyBoard(state.board.length), selectedRod: UNITS_ROD,
-        },
-        { kind: "next", mission: missionIndex },
-      );
-    }
-    case "hint": {
-      if (state.solved) return emit(state, { kind: "already-solved" });
-      const target = MISSIONS[state.missionIndex].target;
-      const hints = hintBeads(state.board, target);
-      return emit(
-        { ...state, hints, hintUsed: true, selectedRod: hints[0]?.rod ?? state.selectedRod },
-        { kind: "hint", text: `Indiciu: formează ${describeTarget(target, state.board.length)}. Atinge bilele care strălucesc.` },
-      );
-    }
-    case "togglePart": {
-      if (state.activePart === action.part) return { ...state, activePart: null };
-      const seenBefore = state.seenParts.length;
-      const seenParts = state.seenParts.includes(action.part) ? state.seenParts : [...state.seenParts, action.part];
-      const next = { ...state, activePart: action.part, seenParts };
-      if (seenBefore < PARTS_TO_SEE && seenParts.length >= PARTS_TO_SEE) {
-        return emit({ ...next, points: state.points + PARTS_GOAL_POINTS }, { kind: "parts-goal", points: PARTS_GOAL_POINTS });
-      }
-      return next;
-    }
-    case "closeFinished":
-      return { ...state, finished: false };
-    case "replay":
-      return { ...initialLesson(), event: state.event };
-    case "hydrate":
-      return { ...action.state, event: null };
-    case "resetProgress":
-      return emit(initialLesson(), { kind: "reset-progress" });
+/** Builds a self-contained lesson runtime from a definition. Cloning a lesson = new def + createEngine. */
+export function createEngine(def: LessonDefinition): LessonEngine {
+  const { missions, parts } = def;
+
+  const initialLesson = (): LessonState => ({
+    board: emptyBoard(ROD_COUNT),
+    selectedRod: UNITS_ROD,
+    missionIndex: 0,
+    solved: false,
+    hintUsed: false,
+    points: 0,
+    hints: [],
+    seenParts: [],
+    activePart: null,
+    finished: false,
+    event: null,
+  });
+
+  const isLastMission = (s: Pick<LessonState, "missionIndex">) => s.missionIndex === missions.length - 1;
+
+  function updateBoard(state: LessonState, board: Board, selectedRod: number): LessonState {
+    const target = missions[state.missionIndex].target;
+    const hints = state.hints.length ? hintBeads(board, target) : [];
+    const next: LessonState = { ...state, board, selectedRod, hints };
+    if (state.solved || totalOf(board) !== target) return next;
+    const points = MISSION_POINTS + (state.hintUsed ? 0 : NO_HINT_BONUS);
+    return emit(
+      { ...next, solved: true, points: state.points + points },
+      { kind: "solved", points, bonus: !state.hintUsed, praise: PRAISE[state.missionIndex % PRAISE.length] },
+    );
   }
+
+  function reducer(state: LessonState, action: LessonAction): LessonState {
+    switch (action.type) {
+      case "tap":
+        return updateBoard(state, tapBead(state.board, action.rod, action.bead, action.index), action.rod);
+      case "setDigit":
+        return updateBoard(state, setDigit(state.board, action.rod, action.digit), action.rod);
+      case "selectRod":
+        return { ...state, selectedRod: action.rod };
+      case "reset":
+        return emit({ ...state, board: emptyBoard(state.board.length), hints: [] }, { kind: "reset" });
+      case "next": {
+        if (!state.solved) return emit(state, { kind: "blocked" });
+        if (isLastMission(state)) return emit({ ...state, finished: true }, { kind: "finished" });
+        const missionIndex = state.missionIndex + 1;
+        return emit(
+          {
+            ...state, missionIndex, solved: false, hintUsed: false, hints: [],
+            board: emptyBoard(state.board.length), selectedRod: UNITS_ROD,
+          },
+          { kind: "next", mission: missionIndex },
+        );
+      }
+      case "hint": {
+        if (state.solved) return emit(state, { kind: "already-solved" });
+        const target = missions[state.missionIndex].target;
+        const hints = hintBeads(state.board, target);
+        return emit(
+          { ...state, hints, hintUsed: true, selectedRod: hints[0]?.rod ?? state.selectedRod },
+          { kind: "hint", text: `Indiciu: formează ${describeTarget(target, state.board.length)}. Atinge bilele care strălucesc.` },
+        );
+      }
+      case "togglePart": {
+        if (state.activePart === action.part) return { ...state, activePart: null };
+        const seenBefore = state.seenParts.length;
+        const seenParts = state.seenParts.includes(action.part) ? state.seenParts : [...state.seenParts, action.part];
+        const next = { ...state, activePart: action.part, seenParts };
+        if (seenBefore < PARTS_TO_SEE && seenParts.length >= PARTS_TO_SEE) {
+          return emit({ ...next, points: state.points + PARTS_GOAL_POINTS }, { kind: "parts-goal", points: PARTS_GOAL_POINTS });
+        }
+        return next;
+      }
+      case "closeFinished":
+        return { ...state, finished: false };
+      case "replay":
+        return { ...initialLesson(), event: state.event };
+      case "hydrate":
+        return { ...action.state, event: null };
+      case "resetProgress":
+        return emit(initialLesson(), { kind: "reset-progress" });
+    }
+  }
+
+  const passed = (s: LessonState, mission: number) =>
+    s.missionIndex > mission || (s.missionIndex === mission && s.solved);
+
+  const goalsOf = (s: LessonState) =>
+    def.goals.map((g) => ({
+      text: g.text,
+      done: g.needsParts ? s.seenParts.length >= PARTS_TO_SEE : g.afterMission !== undefined && passed(s, g.afterMission),
+    }));
+
+  const progressOf = (s: LessonState) =>
+    missions.length ? Math.round(((s.missionIndex + (s.solved ? 1 : 0)) / missions.length) * 100) : 0;
+
+  return { def, missions, parts, initialLesson, reducer, goalsOf, progressOf, isLastMission };
 }
-
-const passed = (s: LessonState, mission: number) => s.missionIndex > mission || (s.missionIndex === mission && s.solved);
-
-export const goalsOf = (s: LessonState) => [
-  { text: "Cunosc părțile Sorobanului", done: s.seenParts.length >= PARTS_TO_SEE },
-  { text: "Știu valoarea bilelor (1 și 5)", done: passed(s, 2) },
-  { text: "Formez cifrele de la 0 la 9", done: passed(s, 4) },
-  { text: "Citesc numere cu mai multe cifre", done: passed(s, MISSIONS.length - 1) },
-];
-
-export const progressOf = (s: LessonState) =>
-  Math.round(((s.missionIndex + (s.solved ? 1 : 0)) / MISSIONS.length) * 100);

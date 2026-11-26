@@ -2,7 +2,14 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AbacusApp from "./AbacusApp";
-import { MISSIONS } from "@/lib/lesson";
+import { getLesson, lessonStorageKey } from "@/lib/curriculum";
+import type { LessonDefinition } from "@/lib/lesson";
+
+const DEF = getLesson("m2-l1") as LessonDefinition;
+const MISSIONS = DEF.missions;
+const STORAGE_KEY = lessonStorageKey(DEF);
+
+const renderApp = () => render(<AbacusApp lesson={DEF} moduleTitle="Modulul 2" />);
 
 // Confetti checks prefers-reduced-motion; jsdom lacks matchMedia.
 window.matchMedia = vi.fn().mockImplementation((query: string) => ({
@@ -16,8 +23,6 @@ window.matchMedia = vi.fn().mockImplementation((query: string) => ({
   dispatchEvent: () => false,
 })) as unknown as typeof window.matchMedia;
 
-const STORAGE_KEY = "soroban-lesson-v1";
-
 const clickBead = (name: RegExp) => fireEvent.click(screen.getByRole("button", { name }));
 
 beforeEach(() => {
@@ -28,7 +33,7 @@ afterEach(cleanup);
 
 describe("AbacusApp", () => {
   it("renders the first mission with its target", () => {
-    render(<AbacusApp />);
+    renderApp();
     expect(screen.getByText("Descoperă Sorobanul")).toBeTruthy();
     expect(screen.getByText(MISSIONS[0].text)).toBeTruthy();
     expect(screen.getByText("Misiunea 1")).toBeTruthy();
@@ -36,14 +41,14 @@ describe("AbacusApp", () => {
   });
 
   it("solves mission 1 by tapping the first lower bead on the units rod", () => {
-    render(<AbacusApp />);
+    renderApp();
     clickBead(/Unități: bila inferioară 1 \(1\), inactivă/);
     expect(screen.getByText("Misiune îndeplinită!")).toBeTruthy();
     expect(screen.getByText(/\+15/)).toBeTruthy();
   });
 
   it("advances to the next mission after Continue", () => {
-    render(<AbacusApp />);
+    renderApp();
     clickBead(/Unități: bila inferioară 1 \(1\), inactivă/);
     fireEvent.click(screen.getByRole("button", { name: /Continuă/ }));
     expect(screen.getByText("Misiunea 2")).toBeTruthy();
@@ -51,20 +56,20 @@ describe("AbacusApp", () => {
   });
 
   it("blocks Continue until the mission is solved", () => {
-    render(<AbacusApp />);
+    renderApp();
     fireEvent.click(screen.getByRole("button", { name: /Continuă/ }));
     expect(screen.getByText("Misiunea 1")).toBeTruthy();
     expect(screen.getByText(/Mai întâi îndeplinește misiunea/)).toBeTruthy();
   });
 
   it("sets a digit on the selected rod via keyboard", () => {
-    render(<AbacusApp />);
+    renderApp();
     fireEvent.keyDown(document, { key: "3" });
     expect(screen.getByText("3", { selector: "output" })).toBeTruthy();
   });
 
   it("shows the help modal and its two-step progress wipe", () => {
-    render(<AbacusApp />);
+    renderApp();
     fireEvent.click(screen.getByRole("button", { name: "Ajutor" }));
     expect(screen.getByText("Cum funcționează Sorobanul?")).toBeTruthy();
 
@@ -77,7 +82,7 @@ describe("AbacusApp", () => {
   });
 
   it("persists progress to localStorage and restores it on reload", () => {
-    const first = render(<AbacusApp />);
+    const first = renderApp();
     clickBead(/Unități: bila inferioară 1 \(1\), inactivă/);
     fireEvent.click(screen.getByRole("button", { name: /Continuă/ }));
     first.unmount();
@@ -86,13 +91,13 @@ describe("AbacusApp", () => {
     expect(saved.missionIndex).toBe(1);
     expect(saved.points).toBe(15);
 
-    render(<AbacusApp />);
+    renderApp();
     expect(screen.getByText("Misiunea 2")).toBeTruthy();
     expect(screen.getByText("15")).toBeTruthy();
   });
 
   it("explores a soroban part and shows its description", () => {
-    render(<AbacusApp />);
+    renderApp();
     fireEvent.click(screen.getByRole("button", { name: "Bara de calcul" }));
     expect(screen.getByText(/desparte bilele/)).toBeTruthy();
   });

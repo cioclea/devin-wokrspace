@@ -9,7 +9,11 @@ import InfoPanel from "./InfoPanel";
 import MissionCard from "./MissionCard";
 import Modal from "./Modal";
 import PartsExplorer from "./PartsExplorer";
-import { MISSIONS } from "@/lib/lesson";
+import { getLesson } from "@/lib/curriculum";
+
+const LESSON = getLesson("m2-l1")!;
+const MISSIONS = LESSON.missions;
+const PARTS = LESSON.parts;
 import { emptyBoard, rodFromDigit } from "@/lib/soroban";
 import type { Board } from "@/lib/soroban";
 
@@ -17,7 +21,7 @@ afterEach(cleanup);
 
 describe("Header", () => {
   it("shows module, step and points", () => {
-    render(<Header step={2} steps={7} progress={30} points={25} />);
+    render(<Header step={2} steps={7} progress={30} points={25} moduleTitle="Modulul 2" lessonTitle="Descoperă Sorobanul" />);
     expect(screen.getByText("Pasul 2/7")).toBeTruthy();
     expect(screen.getByText("25")).toBeTruthy();
     expect(screen.getByRole("progressbar").getAttribute("aria-valuenow")).toBe("30");
@@ -59,7 +63,7 @@ describe("InfoPanel", () => {
 describe("PartsExplorer", () => {
   it("lists all parts and shows the active description", () => {
     const onToggle = vi.fn();
-    render(<PartsExplorer activePart="beam" seenParts={["beam"]} onToggle={onToggle} />);
+    render(<PartsExplorer parts={PARTS} activePart="beam" seenParts={["beam"]} onToggle={onToggle} />);
     expect(screen.getAllByRole("button")).toHaveLength(6);
     expect(screen.getByText(/desparte bilele/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Rama" }));
