@@ -156,7 +156,7 @@ export default function AbacusApp({ lesson, moduleTitle, onOpenMenu, navOpen }: 
           <h1 id="lessonTitle">{lesson.title}</h1>
           <p className="subtitle">{lesson.subtitle ?? "Învață să calculezi folosind tehnica japoneză"}</p>
 
-          <MissionCard mission={mission} index={state.missionIndex} solved={state.solved} message={message} label={lesson.missionLabel} />
+          <MissionCard mission={mission} index={state.missionIndex} solved={state.solved} message={message} label={lesson.missionLabel} className={lesson.missionClassName} />
 
           <div className="card stage">
             <div className="total">

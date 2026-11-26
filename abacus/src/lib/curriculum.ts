@@ -48,6 +48,7 @@ export const MODULES: ModuleDef[] = [
         title: "Descoperă componentele abacului",
         subtitle: "Explorează un abac japonez, află rolul fiecărei piese și încearcă să le identifici singur.",
         missionLabel: "Misiunea",
+        missionClassName: "green",
         missions: M1_L1_MISSIONS,
         parts: COMPONENTS_PARTS,
         goals: DISCOVERY_GOALS,

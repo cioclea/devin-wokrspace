@@ -7,11 +7,12 @@ interface Props {
   solved: boolean;
   message: string;
   label?: string;
+  className?: string;
 }
 
-export default function MissionCard({ mission, index, solved, message, label }: Props) {
+export default function MissionCard({ mission, index, solved, message, label, className }: Props) {
   return (
-    <div className={`card mission${solved ? " done" : ""}`} aria-live="polite">
+    <div className={`card mission${solved ? " done" : ""}${className ? ` ${className}` : ""}`} aria-live="polite">
       <div className="ic" aria-hidden="true">{solved ? "✅" : mission.icon}</div>
       <div>
         <h2>{solved ? "Misiune îndeplinită!" : (label ?? `Misiunea ${index + 1}`)}</h2>

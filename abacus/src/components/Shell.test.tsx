@@ -46,6 +46,7 @@ describe("Shell", () => {
     expect(screen.getByText("Explorează un abac japonez, află rolul fiecărei piese și încearcă să le identifici singur.")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Misiunea" })).toBeTruthy();
     expect(screen.getByText("Descoperă componentele abacului și află cum funcționează fiecare.")).toBeTruthy();
+    expect(document.querySelector(".mission.green")).toBeTruthy();
   });
 
   it("switches to Modulul 2 · Lecția 1 (the original lesson)", () => {

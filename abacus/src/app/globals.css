@@ -76,6 +76,13 @@ h1{font-size:clamp(28px,4vw,42px);line-height:1.08;margin:10px 0 6px;font-weight
 .mission.done{background:var(--matcha-soft);border-color:#CDE5D1}
 .mission.done .ic{background:#fff}
 .mission.done h2{color:var(--matcha)}
+.mission.green{background:#27664F;border-color:#1E4A38}
+.mission.green .ic{background:rgba(255,255,255,.16)}
+.mission.green h2{color:#BFDEC9}
+.mission.green p{color:#fff}
+.mission.green .tgt{background:rgba(0,0,0,.18)}
+.mission.green .tgt small{color:#BFDEC9}
+.mission.green .tgt span{color:#fff}
 
 /* STAGE */
 .stage{margin-top:18px;padding:18px 16px 22px;display:flex;flex-direction:column;align-items:center;gap:14px;position:relative;overflow:hidden}

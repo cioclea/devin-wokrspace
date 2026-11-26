@@ -33,6 +33,8 @@ export interface LessonDefinition {
   subtitle?: string;
   /** Overrides the "Misiunea N" card heading when set. */
   missionLabel?: string;
+  /** Extra CSS class applied to the mission card (e.g. a per-lesson color theme). */
+  missionClassName?: string;
   missions: Mission[];
   parts: PartDef[];
   goals: GoalDef[];
