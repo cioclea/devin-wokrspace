@@ -8,8 +8,8 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "build": "next build && ln -sfn . out/app3",
+    "start": "serve out -l 3000",
     "lint": "eslint",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -33,6 +33,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.29",
     "jsdom": "^31.0.1",
+    "serve": "^14.2.8",
     "typescript": "6.0.3",
     "vitest": "^5.1.1"
   }
