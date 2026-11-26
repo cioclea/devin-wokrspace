@@ -25,6 +25,10 @@ const DISCOVERY_MISSIONS: LessonDefinition["missions"] = [
   { text: "Formează numărul 507.", target: 507, icon: "🏆" },
 ];
 
+const M1_L1_MISSIONS: LessonDefinition["missions"] = DISCOVERY_MISSIONS.map((m, i) =>
+  i === 0 ? { ...m, text: "Descoperă componentele abacului și află cum funcționează fiecare." } : m,
+);
+
 const DISCOVERY_GOALS: LessonDefinition["goals"] = [
   { text: "Cunosc părțile Sorobanului", needsParts: true },
   { text: "Știu valoarea bilelor (1 și 5)", afterMission: 2 },
@@ -42,8 +46,9 @@ export const MODULES: ModuleDef[] = [
         moduleId: "modul-1",
         number: 1,
         title: "Descoperă componentele abacului",
-        subtitle: "Explorează frame-ul, tijele și bilele unui Soroban real",
-        missions: DISCOVERY_MISSIONS,
+        subtitle: "Explorează un abac japonez, află rolul fiecărei piese și încearcă să le identifici singur.",
+        missionLabel: "Misiunea",
+        missions: M1_L1_MISSIONS,
         parts: COMPONENTS_PARTS,
         goals: DISCOVERY_GOALS,
       },

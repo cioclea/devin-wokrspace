@@ -31,6 +31,8 @@ export interface LessonDefinition {
   number: number;
   title: string;
   subtitle?: string;
+  /** Overrides the "Misiunea N" card heading when set. */
+  missionLabel?: string;
   missions: Mission[];
   parts: PartDef[];
   goals: GoalDef[];

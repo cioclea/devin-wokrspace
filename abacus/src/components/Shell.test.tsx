@@ -43,7 +43,9 @@ describe("Shell", () => {
   it("opens on Modulul 1 · Lecția 1 by default", () => {
     render(<Shell />);
     expect(screen.getByRole("heading", { name: "Descoperă componentele abacului" })).toBeTruthy();
-    expect(screen.getByText(/Explorează frame-ul/)).toBeTruthy();
+    expect(screen.getByText("Explorează un abac japonez, află rolul fiecărei piese și încearcă să le identifici singur.")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Misiunea" })).toBeTruthy();
+    expect(screen.getByText("Descoperă componentele abacului și află cum funcționează fiecare.")).toBeTruthy();
   });
 
   it("switches to Modulul 2 · Lecția 1 (the original lesson)", () => {
@@ -81,7 +83,7 @@ describe("Shell", () => {
     );
     render(<Shell />);
     // Modulul 1 starts fresh at mission 1
-    expect(screen.getByText("Misiunea 1")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Misiunea" })).toBeTruthy();
     // switch to Modulul 2 → restored to mission 2 with 15 points
     expandModule("Modulul 2");
     fireEvent.click(nav().getByRole("button", { name: /Descoperă Sorobanul/ }));
