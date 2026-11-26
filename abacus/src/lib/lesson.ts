@@ -43,6 +43,7 @@ export type LessonEvent =
   | { kind: "hint"; text: string }
   | { kind: "already-solved" }
   | { kind: "parts-goal"; points: number }
+  | { kind: "reset-progress" }
   | { kind: "finished" };
 
 export interface LessonState {
@@ -69,7 +70,9 @@ export type LessonAction =
   | { type: "hint" }
   | { type: "togglePart"; part: PartId }
   | { type: "closeFinished" }
-  | { type: "replay" };
+  | { type: "replay" }
+  | { type: "hydrate"; state: LessonState }
+  | { type: "resetProgress" };
 
 export const initialLesson = (): LessonState => ({
   board: emptyBoard(ROD_COUNT),
@@ -149,6 +152,10 @@ export function lessonReducer(state: LessonState, action: LessonAction): LessonS
       return { ...state, finished: false };
     case "replay":
       return { ...initialLesson(), event: state.event };
+    case "hydrate":
+      return { ...action.state, event: null };
+    case "resetProgress":
+      return emit(initialLesson(), { kind: "reset-progress" });
   }
 }
 

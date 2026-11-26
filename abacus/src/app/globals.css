@@ -157,6 +157,8 @@ aside{display:flex;flex-direction:column;gap:16px;position:sticky;top:86px}
 .btn:active{transform:translateY(2px)}
 .btn.ghost{background:var(--bg2);color:var(--ink)}
 .btn.ghost:hover{background:#EEDFC9}
+.btn.danger{background:#FBEAE8;color:#B3261E}
+.btn.danger:hover{background:#F6D9D5}
 .btn.primary{background:linear-gradient(180deg,#F07A5F,var(--coral));color:#fff;box-shadow:0 4px 0 #B8472F, 0 8px 18px rgba(232,102,74,.35)}
 .btn.primary:active{box-shadow:0 1px 0 #B8472F}
 .btn.primary[aria-disabled="true"]{background:#E4DACB;color:#8E8578;box-shadow:0 4px 0 #CDBFA9;cursor:not-allowed}
