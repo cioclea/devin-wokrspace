@@ -26,7 +26,7 @@ const DISCOVERY_MISSIONS: LessonDefinition["missions"] = [
 ];
 
 const M1_L1_MISSIONS: LessonDefinition["missions"] = DISCOVERY_MISSIONS.map((m, i) =>
-  i === 0 ? { ...m, text: "Descoperă componentele abacului și află cum funcționează fiecare." } : m,
+  i === 0 ? { ...m, text: "Descoperă componentele abacului și află cum funcționează fiecare.", icon: "🔍" } : m,
 );
 
 const DISCOVERY_GOALS: LessonDefinition["goals"] = [
