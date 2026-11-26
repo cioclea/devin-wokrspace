@@ -15,18 +15,29 @@ window.matchMedia = vi.fn().mockImplementation((query: string) => ({
   dispatchEvent: () => false,
 })) as unknown as typeof window.matchMedia;
 
+const nav = () => within(screen.getByRole("navigation", { name: "Module și lecții" }));
+const expandModule = (title: string) => fireEvent.click(nav().getByRole("button", { name: title }));
+
 beforeEach(() => localStorage.clear());
 afterEach(cleanup);
 
 describe("Shell", () => {
-  it("lists both modules and their lessons in the sidebar", () => {
+  it("lists both modules; only the active module's lessons are visible", () => {
     render(<Shell />);
-    const nav = within(screen.getByRole("navigation", { name: "Module și lecții" }));
-    expect(nav.getByText("Modulul 1")).toBeTruthy();
-    expect(nav.getByText("Modulul 2")).toBeTruthy();
-    expect(nav.getByRole("button", { name: /Descoperă componentele abacului/ })).toBeTruthy();
-    expect(nav.getByRole("button", { name: /Descoperă Sorobanul/ })).toBeTruthy();
-    expect(nav.getByRole("button", { name: /Lecție nouă/ })).toBeTruthy();
+    expect(nav().getByRole("button", { name: "Modulul 1" })).toBeTruthy();
+    expect(nav().getByRole("button", { name: "Modulul 2" })).toBeTruthy();
+    // Modulul 1 is active → its lessons show; Modulul 2's are collapsed
+    expect(nav().getByRole("button", { name: /Descoperă componentele abacului/ })).toBeTruthy();
+    expect(nav().queryByRole("button", { name: /Descoperă Sorobanul/ })).toBeNull();
+  });
+
+  it("expands a module to reveal its lessons", () => {
+    render(<Shell />);
+    expandModule("Modulul 2");
+    expect(nav().getByRole("button", { name: /Descoperă Sorobanul/ })).toBeTruthy();
+    // collapsing hides them again
+    expandModule("Modulul 2");
+    expect(nav().queryByRole("button", { name: /Descoperă Sorobanul/ })).toBeNull();
   });
 
   it("opens on Modulul 1 · Lecția 1 by default", () => {
@@ -37,15 +48,24 @@ describe("Shell", () => {
 
   it("switches to Modulul 2 · Lecția 1 (the original lesson)", () => {
     render(<Shell />);
-    fireEvent.click(screen.getByRole("button", { name: /Descoperă Sorobanul/ }));
+    expandModule("Modulul 2");
+    fireEvent.click(nav().getByRole("button", { name: /Descoperă Sorobanul/ }));
     expect(screen.getByText("Învață să calculezi folosind tehnica japoneză")).toBeTruthy();
     expect(screen.getByText("Misiunea 1")).toBeTruthy();
   });
 
   it("shows a coming-soon panel for placeholder lessons", () => {
     render(<Shell />);
-    fireEvent.click(screen.getByRole("button", { name: /Lecție nouă/ }));
+    fireEvent.click(nav().getByRole("button", { name: /Lecție nouă/ }));
     expect(screen.getByText(/va fi disponibilă în curând/)).toBeTruthy();
+  });
+
+  it("keeps the switched-to module expanded", () => {
+    render(<Shell />);
+    expandModule("Modulul 2");
+    fireEvent.click(nav().getByRole("button", { name: /Descoperă Sorobanul/ }));
+    // Modulul 2 stays open showing the active lesson
+    expect(nav().getByRole("button", { name: /Descoperă Sorobanul/ })).toBeTruthy();
   });
 
   it("keeps progress isolated per lesson", () => {
@@ -63,7 +83,8 @@ describe("Shell", () => {
     // Modulul 1 starts fresh at mission 1
     expect(screen.getByText("Misiunea 1")).toBeTruthy();
     // switch to Modulul 2 → restored to mission 2 with 15 points
-    fireEvent.click(screen.getByRole("button", { name: /Descoperă Sorobanul/ }));
+    expandModule("Modulul 2");
+    fireEvent.click(nav().getByRole("button", { name: /Descoperă Sorobanul/ }));
     expect(screen.getByText("Misiunea 2")).toBeTruthy();
     expect(screen.getByText("15")).toBeTruthy();
   });

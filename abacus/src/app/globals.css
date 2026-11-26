@@ -40,7 +40,12 @@ header{position:sticky;top:0;z-index:20;background:rgba(251,246,238,.85);backdro
 :root{--sbw:250px}
 .shell{flex:1;display:flex;flex-direction:column;margin-left:var(--sbw)}
 .sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sbw);z-index:30;background:#FFFDF8;border-right:1px solid #EFE3D2;padding:76px 14px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:18px}
-.nav-module-title{font-size:11px;font-weight:900;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);padding:0 10px 6px}
+.nav-module{display:flex;flex-direction:column}
+.nav-module-btn{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;border:0;background:none;border-radius:14px;padding:10px 12px;cursor:pointer;font-size:11px;font-weight:900;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);transition:background .2s}
+.nav-module-btn:hover{background:var(--bg2)}
+.nav-module-btn .nav-chev{font-size:12px;transition:transform .25s var(--ease)}
+.nav-module-btn[aria-expanded="true"] .nav-chev{transform:rotate(180deg)}
+.nav-lessons{display:flex;flex-direction:column;gap:2px;padding:2px 0 6px}
 .nav-lesson{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;border:0;background:none;border-radius:14px;padding:10px 12px;cursor:pointer;font-weight:800;transition:background .2s}
 .nav-lesson:hover{background:var(--bg2)}
 .nav-lesson.active{background:var(--ai-soft)}
